@@ -3,91 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Study Hub v 0.0.4.beta</title>
-    <!-- <style>
-        
-    </style> -->
+    <title>DSE Online Judge | Quiz Maker Hub</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- KaTeX CSS and JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"></script>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>Adult content warning</h1>
-        <p>Hello world!</p>
+    <div class="top-bar">
+        <div class="nav-links">
+            <a href="../index.html">Home</a>
+            <a href="../tasks.html">Tasks</a>
+            <a href="../resources.html">Resources</a>
+        </div>
+        <div class="login-area" id="loginArea">
+            <div class="login-button" id="loginButton">Loading...</div>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <a href="#" id="logoutLink">Logout</a>
+            </div>
+        </div>
     </div>
 
-    <div class="sectors">
-        <!-- Existing: DSE Online Judge -->
-        <a href="./quiz" class="card">
-            <div class="card-header">
-                <div class="card-icon"></div>
-                <div class="card-title">DSE Online Judge</div>
-                <div class="card-description">
-                    Filter by subject, topic, and type. Instant feedback and scoring.
-                </div>
-            </div>
-            <div class="card-footer">
-                
-            </div>
-        </a>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h3>Login</h3>
+            <input type="text" id="usernameInput" placeholder="Username">
+            <input type="password" id="passwordInput" placeholder="Password">
+            <button id="loginSubmit">Login</button>
+            <button class="close-modal" id="closeModalBtn">Cancel</button>
+        </div>
+    </div>
 
-        <!-- Existing: Question Creator -->
-        <a href="./create" class="card">
-            <div class="card-header">
-                <div class="card-icon"></div>
-                <div class="card-title">Question Creator</div>
-                <div class="card-description">
-                    Hello world!!!
-                </div>
+
+    <div class="container">
+        <div class="quiz-header">
+            <h1>DSE Online Judge</h1>
+            <p>Hello World</p>
+        </div>
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Subject</label>
+                <select id="subjectFilter">
+                    <option value="all">All Subjects</option>
+                </select>
             </div>
-            <div class="card-footer">
-                
+            <div class="filter-group">
+                <label>Topic</label>
+                <select id="topicFilter" disabled>
+                    <option value="all">All Topics</option>
+                </select>
             </div>
-        </a>
-        <a href="./papers" class="card">
-            <div class="card-header">
-                <div class="card-icon"></div>
-                <div class="card-title">Paper Maker</div>
-                <div class="card-description">
-                    Enter your problems and pack them into a pdf!
-                </div>
+            <div class="filter-group">
+                <label>Subtopic</label>
+                <select id="subtopicFilter" disabled>
+                    <option value="all">All Subtopics</option>
+                </select>
             </div>
-            <div class="card-footer">
-                
-            </div>
-        </a>
-        <a href="./pastpaper" class="card">
-            <div class="card-header">
-                <div class="card-icon"></div>
-                <div class="card-title">Name???</div>
-                <div class="card-description">
-                    HaHaHa
-                </div>
-            </div>
-            <div class="card-footer">
-                
-            </div>
-        </a>
-        <!-- Placeholder for future sectors (easy to add more) -->
-        <div class="card placeholder">
-            <div class="card-header">
-                <div class="card-icon">🔜</div>
-                <div class="card-title">Coming Soon</div>
-                <div class="card-description">
-                    Planned features: fully structured DSE PP to avoid HKEAA.
-                </div>
-            </div>
-            <div class="card-footer">
-                <span>Under development</span>
+            <div class="filter-group">
+                <label>Question Type</label>
+                <select id="typeFilter" disabled>
+                    <option value="all">All Types</option>
+                    <option value="MC">MC</option>
+                    <option value="LQ">LQ</option>
+                </select>
             </div>
         </div>
 
-        <!-- You can add more cards by copying the structure above -->
-    </div>
+        <div class="stats-bar">
+            <div class="score-area">Score: <span id="totalScoreDisplay">0</span> / <span id="maxScoreDisplay">0</span></div>
+            <div class="btn-group">
+                <button class="btn-submit" id="submitAllBtn">Submit All</button>
+                <button class="btn-reset" id="resetBtn">Reset All</button>
+            </div>
+        </div>
 
-    <div class="footer">
-        
+        <div id="questionsContainer" class="questions-area">
+            <div style="text-align: center; padding: 2rem;">Select filters to load questions...</div>
+        </div>
     </div>
-</div>
+    <button id="backToTopBtn" class="back-to-top" title="Back to Top">↑</button>
+    <footer>
+        © 2025 Quiz Maker Hub
+    </footer>
+
+    <script src="../account.js"></script>
+    <script src="./database.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // ======================== DATABASE ========================
+        
+
+        // Helper: get unique values for a given key
+        
+
+        updateLoginUI();
+    </script>
 </body>
 </html>
