@@ -2,6 +2,27 @@
             const values = array.map(item => item[key]).filter(v => v);
             return [...new Set(values)].sort();
         }
+        function searchQuestions(question, searchTerm) {
+            if (!searchTerm) return true;
+            
+            const term = searchTerm.toLowerCase().trim();
+            
+            // Search in question text
+            if (question.text.toLowerCase().includes(term)) return true;
+            
+            // Search in options (for MC questions)
+            if (question.options && Array.isArray(question.options)) {
+                for (let option of question.options) {
+                    if (option.toLowerCase().includes(term)) return true;
+                }
+            }
+            
+            // Search in explanation/answer (optional)
+            if (question.explain && question.explain.toLowerCase().includes(term)) return true;
+            if (question.answer && question.answer.toLowerCase().includes(term)) return true;
+            
+            return false;
+        }
         // Back to Top Button Logic
         (function() {
             const backToTopBtn = document.getElementById('backToTopBtn');
@@ -107,12 +128,20 @@
             const topic = topicSelect.value;
             const subtopic = subtopicSelect.value;
             const type = typeSelect.value;
+            const searchTerm = document.getElementById('searchInput').value;
 
             let filtered = database;
+            
+            // Apply filters
             if (subject !== 'all') filtered = filtered.filter(q => q.subject === subject);
             if (topic !== 'all') filtered = filtered.filter(q => q.topic === topic);
             if (subtopic !== 'all') filtered = filtered.filter(q => q.subtopic === subtopic);
             if (type !== 'all') filtered = filtered.filter(q => q.type === type);
+            
+            // Apply search
+            if (searchTerm) {
+                filtered = filtered.filter(q => searchQuestions(q, searchTerm));
+            }
 
             currentQuestions = filtered;
             renderQuestions();
@@ -386,6 +415,13 @@
             typeSelect.addEventListener('change', () => {
                 loadQuestions();
             });
+            const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    // Search as you type
+                    searchInput.addEventListener('input', () => {
+                        loadQuestions();
+                    });
+                }
         }
 
         // Initialization
