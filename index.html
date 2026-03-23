@@ -3,19 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>DSE Online Judge | Quiz Maker Hub</title>
+    <title>Home | Quiz Maker Hub</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- KaTeX CSS and JS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"></script>
 </head>
 <body>
     <div class="top-bar">
         <div class="nav-links">
-            <a href="../index.html">Home</a>
-            <a href="../tasks.html">Tasks</a>
-            <a href="../resources.html">Resources</a>
+            <a href="index.html">Home</a>
+            <a href="tasks.html">Tasks</a>
+            <a href="resources.html">Resources</a>
         </div>
         <div class="login-area" id="loginArea">
             <div class="login-button" id="loginButton">Loading...</div>
@@ -36,69 +32,55 @@
         </div>
     </div>
 
-
     <div class="container">
-        <div class="quiz-header">
-            <h1>DSE Online Judge</h1>
-            <p>Hello World</p>
-        </div>
-        <div class="filter-bar">
-            <div class="filter-group">
-                <label>Subject</label>
-                <select id="subjectFilter">
-                    <option value="all">All Subjects</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Topic</label>
-                <select id="topicFilter" disabled>
-                    <option value="all">All Topics</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Subtopic</label>
-                <select id="subtopicFilter" disabled>
-                    <option value="all">All Subtopics</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Question Type</label>
-                <select id="typeFilter" disabled>
-                    <option value="all">All Types</option>
-                    <option value="MC">MC</option>
-                    <option value="LQ">LQ</option>
-                </select>
-            </div>
+        <div class="hero">
+            <h1>(porn)StudyHub</h1>
+            <p>Create, practice, and manage exams – all in one place.</p>
         </div>
 
-        <div class="stats-bar">
-            <div class="score-area">Score: <span id="totalScoreDisplay">0</span> / <span id="maxScoreDisplay">0</span></div>
-            <div class="btn-group">
-                <button class="btn-submit" id="submitAllBtn">Submit All</button>
-                <button class="btn-reset" id="resetBtn">Reset All</button>
+        <div class="features">
+            <a href="./oj/index.html" class="card">
+                <div class="card-icon"></div>
+                <h3>DSE Online Judge</h3>
+                <p>Practice thousands of questions with instant feedback. Filter by subject, topic, and question type.</p>
+            </a>
+            <a href="./create" class="card">
+                <div class="card-icon"></div>
+                <h3>Question Creator</h3>
+                <p>Build your own question bank. Import/export JSON, edit questions, and generate PDF exam papers.</p>
+            </a>
+            <a href="./pastpaper/" class="card">
+                <div class="card-icon">📂</div>
+                <h3>Past Papers</h3>
+                <p>Browse and download past exam papers organised by subject and year.</p>
+            </a>
+            <a href="./subjects" class="card">
+                <div class="card-icon"></div>
+                <h3>Subject Navigator</h3>
+                <p>Visual subject map – click to jump directly to your chosen subject page.</p>
+            </a>
+            <a href="./timeline" class="card">
+                <div class="card-icon"></div>
+                <h3>Exam Countdown</h3>
+                <p>Stay on track with upcoming exam dates and countdown timers.</p>
+            </a>
+            <div class="card" style="background: #f8fafc; border: 2px dashed #cbd5e1;">
+                <div class="card-icon"></div>
+                <h3>Coming Soon</h3>
+                <p>More tools, analytics, and collaborative features are on the way.</p>
             </div>
-        </div>
-
-        <div id="questionsContainer" class="questions-area">
-            <div style="text-align: center; padding: 2rem;">Select filters to load questions...</div>
         </div>
     </div>
-    <button id="backToTopBtn" class="back-to-top" title="Back to Top">↑</button>
+
     <footer>
-        © 2025 Quiz Maker Hub
+        
     </footer>
-
-    <script src="../account.js"></script>
-    <script src="./database.js"></script>
-    <script src="script.js"></script>
-    <script>
-        // ======================== DATABASE ========================
+    
+    <script src="account.js"></script>
+    <script src="script.js">
+      
+        // DOM elements
         
-
-        // Helper: get unique values for a given key
-        
-
-        updateLoginUI();
     </script>
 </body>
 </html>
