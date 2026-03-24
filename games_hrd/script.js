@@ -1,34 +1,34 @@
-// script.js — 滑动华容道 (支持滑动手势 + 点击移动 + 流畅动画) ｜ 部分变量混淆版
+// script.js — 滑动华容道 (支持滑动手势 + 点击移动 + 流畅动画)
 (function(){
     // ----- DOM 元素 -----
-    const _0x1a2b = document.getElementById('puzzleGrid');
-    const _0x3c4d = document.getElementById('gridSize');
-    const _0x5e6f = document.getElementById('randomBtn');
-    const _0x7a8b = document.getElementById('resetBtn');
-    const _0x9c0d = document.getElementById('stepCount');
-    const _0x0e1f = document.getElementById('victoryToast');
+    const puzzleGrid = document.getElementById('puzzleGrid');
+    const sizeInput = document.getElementById('gridSize');
+    const randomBtn = document.getElementById('randomBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const stepSpan = document.getElementById('stepCount');
+    const victoryToast = document.getElementById('victoryToast');
 
     // ----- 游戏配置 -----
-    let _0x2f3a = 4;          // N x N (2~8)
-    let _0x4b5c = [];         // 二维数组，0 表示空格
-    let _0x6d7e = 0;
-    let _0x8f9a = false;
+    let currentSize = 4;          // N x N (2~8)
+    let grid = [];                // 二维数组，0 表示空格
+    let stepCount = 0;
+    let gameWon = false;
 
     // ----- 触摸滑动相关变量 -----
-    let _0x1a2c = 0, _0x3b4d = 0;
-    let _0x5c6e = -1, _0x7d8f = -1;
-    let _0x9e0a = false;
-    const _0x0b1c = 20;   // 滑动最小距离(px)
+    let touchStartX = 0, touchStartY = 0;
+    let touchStartRow = -1, touchStartCol = -1;
+    let isSwiping = false;
+    const SWIPE_THRESHOLD = 20;   // 滑动最小距离(px)
 
     // ----- 辅助函数 -----
     // 生成标准顺序（空格在右下角）
-    function _0x2d3e() {
-        const total = _0x2f3a * _0x2f3a;
-        const newGrid = Array(_0x2f3a).fill().map(() => Array(_0x2f3a).fill(0));
+    function getSolvedState() {
+        const total = currentSize * currentSize;
+        const newGrid = Array(currentSize).fill().map(() => Array(currentSize).fill(0));
         let value = 1;
-        for (let i = 0; i < _0x2f3a; i++) {
-            for (let j = 0; j < _0x2f3a; j++) {
-                if (i === _0x2f3a-1 && j === _0x2f3a-1) {
+        for (let i = 0; i < currentSize; i++) {
+            for (let j = 0; j < currentSize; j++) {
+                if (i === currentSize-1 && j === currentSize-1) {
                     newGrid[i][j] = 0;
                 } else {
                     newGrid[i][j] = value++;
@@ -39,29 +39,29 @@
     }
 
     // 查找空格坐标
-    function _0x3e4f(gridData) {
-        for (let i = 0; i < _0x2f3a; i++) {
-            for (let j = 0; j < _0x2f3a; j++) {
+    function findEmptyPos(gridData) {
+        for (let i = 0; i < currentSize; i++) {
+            for (let j = 0; j < currentSize; j++) {
                 if (gridData[i][j] === 0) return { row: i, col: j };
             }
         }
-        return { row: _0x2f3a-1, col: _0x2f3a-1 };
+        return { row: currentSize-1, col: currentSize-1 };
     }
 
     // 交换两个单元格的值
-    function _0x4f5g(gridData, r1, c1, r2, c2) {
+    function swapCells(gridData, r1, c1, r2, c2) {
         [gridData[r1][c1], gridData[r2][c2]] = [gridData[r2][c2], gridData[r1][c1]];
     }
 
     // 检查胜利
-    function _0x5g6h() {
+    function isVictory() {
         let expected = 1;
-        for (let i = 0; i < _0x2f3a; i++) {
-            for (let j = 0; j < _0x2f3a; j++) {
-                if (i === _0x2f3a-1 && j === _0x2f3a-1) {
-                    if (_0x4b5c[i][j] !== 0) return false;
+        for (let i = 0; i < currentSize; i++) {
+            for (let j = 0; j < currentSize; j++) {
+                if (i === currentSize-1 && j === currentSize-1) {
+                    if (grid[i][j] !== 0) return false;
                 } else {
-                    if (_0x4b5c[i][j] !== expected) return false;
+                    if (grid[i][j] !== expected) return false;
                     expected++;
                 }
             }
@@ -70,25 +70,26 @@
     }
 
     // 更新UI（步数 + 胜利样式）
-    function _0x6h7i() {
-        _0x9c0d.innerText = _0x6d7e;
-        const win = _0x5g6h();
-        if (win && !_0x8f9a) {
-            _0x8f9a = true;
-            _0x0e1f.classList.remove('hidden');
-            _0x1a2b.classList.add('win-glow');
-        } else if (!win && _0x8f9a) {
-            _0x8f9a = false;
-            _0x0e1f.classList.add('hidden');
-            _0x1a2b.classList.remove('win-glow');
+    function updateUI() {
+        stepSpan.innerText = stepCount;
+        const win = isVictory();
+        if (win && !gameWon) {
+            gameWon = true;
+            victoryToast.classList.remove('hidden');
+            puzzleGrid.classList.add('win-glow');
+        } else if (!win && gameWon) {
+            gameWon = false;
+            victoryToast.classList.add('hidden');
+            puzzleGrid.classList.remove('win-glow');
         } else if (!win) {
-            _0x0e1f.classList.add('hidden');
-            _0x1a2b.classList.remove('win-glow');
+            victoryToast.classList.add('hidden');
+            puzzleGrid.classList.remove('win-glow');
         }
     }
 
     // 添加交换动画 (给两个位置的方块增加动画类)
-    function _0x7i8j(row1, col1, row2, col2) {
+    function addSwapAnimation(row1, col1, row2, col2) {
+        // 通过当前dom查找对应的tile元素 (因为渲染后 dom 存在)
         const tiles = document.querySelectorAll('.tile');
         if (!tiles.length) return;
         const getTile = (r, c) => {
@@ -112,90 +113,95 @@
     }
 
     // 核心移动: 交换源格与目标格 (源格移动到空格)
-    function _0x8j9k(srcRow, srcCol, dstRow, dstCol, withAnimation = true) {
+    function performMove(srcRow, srcCol, dstRow, dstCol, withAnimation = true) {
         if (srcRow === dstRow && srcCol === dstCol) return false;
-        if (_0x4b5c[srcRow][srcCol] === 0) return false;
+        if (grid[srcRow][srcCol] === 0) return false;   // 源不能是空格
         
-        _0x4f5g(_0x4b5c, srcRow, srcCol, dstRow, dstCol);
-        _0x6d7e++;
-        _0x1a2c();
+        // 交换数据
+        swapCells(grid, srcRow, srcCol, dstRow, dstCol);
+        stepCount++;
+        // 重新渲染网格
+        renderGrid();
+        // 添加动画（渲染后dom已更新）
         if (withAnimation) {
-            _0x7i8j(srcRow, srcCol, dstRow, dstCol);
+            addSwapAnimation(srcRow, srcCol, dstRow, dstCol);
         }
-        _0x6h7i();
+        updateUI();
         return true;
     }
 
     // 尝试移动指定格子的相邻移动（传统点击使用）
-    function _0x9k0l(row, col) {
-        if (_0x8f9a) return false;
-        if (_0x4b5c[row][col] === 0) return false;
-        const empty = _0x3e4f(_0x4b5c);
+    function tryMoveAdjacent(row, col) {
+        if (gameWon) return false;
+        if (grid[row][col] === 0) return false;
+        const empty = findEmptyPos(grid);
         const isAdjacent = (Math.abs(row - empty.row) + Math.abs(col - empty.col)) === 1;
         if (!isAdjacent) return false;
-        return _0x8j9k(row, col, empty.row, empty.col, true);
+        return performMove(row, col, empty.row, empty.col, true);
     }
 
     // 根据滑动方向移动：起点(row,col) 向方向滑动 (dx,dy)
-    function _0x0l1m(row, col, dx, dy) {
-        if (_0x8f9a) return false;
-        if (_0x4b5c[row][col] === 0) return false;
+    function tryMoveByDirection(row, col, dx, dy) {
+        if (gameWon) return false;
+        if (grid[row][col] === 0) return false;
         const targetRow = row + dx;
         const targetCol = col + dy;
-        if (targetRow < 0 || targetRow >= _0x2f3a || targetCol < 0 || targetCol >= _0x2f3a) return false;
-        if (_0x4b5c[targetRow][targetCol] !== 0) return false;
-        return _0x8j9k(row, col, targetRow, targetCol, true);
+        if (targetRow < 0 || targetRow >= currentSize || targetCol < 0 || targetCol >= currentSize) return false;
+        // 目标必须是空格
+        if (grid[targetRow][targetCol] !== 0) return false;
+        return performMove(row, col, targetRow, targetCol, true);
     }
 
     // ---------- 随机打乱（通过随机合法移动保证可解）----------
-    function _0x1m2n() {
-        _0x4b5c = _0x2d3e();
-        _0x6d7e = 0;
-        _0x8f9a = false;
-        _0x0e1f.classList.add('hidden');
-        _0x1a2b.classList.remove('win-glow');
+    function randomShuffle() {
+        // 重置为标准顺序
+        grid = getSolvedState();
+        stepCount = 0;
+        gameWon = false;
+        victoryToast.classList.add('hidden');
+        puzzleGrid.classList.remove('win-glow');
         
-        const totalCells = _0x2f3a * _0x2f3a;
+        const totalCells = currentSize * currentSize;
         let moves = Math.min(500, Math.max(120, totalCells * 10));
         for (let i = 0; i < moves; i++) {
-            const empty = _0x3e4f(_0x4b5c);
+            const empty = findEmptyPos(grid);
             const neighbors = [];
             const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
             for (let [dr, dc] of dirs) {
                 const nr = empty.row + dr, nc = empty.col + dc;
-                if (nr>=0 && nr<_0x2f3a && nc>=0 && nc<_0x2f3a) neighbors.push([nr, nc]);
+                if (nr>=0 && nr<currentSize && nc>=0 && nc<currentSize) neighbors.push([nr, nc]);
             }
             if (neighbors.length) {
                 const rand = Math.floor(Math.random() * neighbors.length);
                 const [nr, nc] = neighbors[rand];
-                _0x4f5g(_0x4b5c, empty.row, empty.col, nr, nc);
+                swapCells(grid, empty.row, empty.col, nr, nc);
             }
         }
-        _0x6d7e = 0;
-        _0x8f9a = false;
-        _0x1a2c();
-        _0x6h7i();
+        stepCount = 0;
+        gameWon = false;
+        renderGrid();
+        updateUI();
     }
 
     // 重置为顺序状态
-    function _0x2n3o() {
-        _0x4b5c = _0x2d3e();
-        _0x6d7e = 0;
-        _0x8f9a = false;
-        _0x0e1f.classList.add('hidden');
-        _0x1a2b.classList.remove('win-glow');
-        _0x1a2c();
-        _0x6h7i();
+    function resetToOrder() {
+        grid = getSolvedState();
+        stepCount = 0;
+        gameWon = false;
+        victoryToast.classList.add('hidden');
+        puzzleGrid.classList.remove('win-glow');
+        renderGrid();
+        updateUI();
     }
 
     // ---------- 渲染网格并绑定触摸&点击事件 (支持手势滑动+点击)----------
-    function _0x3o4p() {
-        _0x1a2b.style.gridTemplateColumns = `repeat(${_0x2f3a}, minmax(55px, 1fr))`;
-        _0x1a2b.innerHTML = '';
+    function renderGrid() {
+        puzzleGrid.style.gridTemplateColumns = `repeat(${currentSize}, minmax(55px, 1fr))`;
+        puzzleGrid.innerHTML = '';
         
-        for (let i = 0; i < _0x2f3a; i++) {
-            for (let j = 0; j < _0x2f3a; j++) {
-                const value = _0x4b5c[i][j];
+        for (let i = 0; i < currentSize; i++) {
+            for (let j = 0; j < currentSize; j++) {
+                const value = grid[i][j];
                 const tile = document.createElement('div');
                 tile.className = 'tile';
                 if (value === 0) {
@@ -207,142 +213,159 @@
                 tile.setAttribute('data-col', j);
                 
                 // ----- 触摸滑动事件 (移动端核心) -----
-                tile.addEventListener('touchstart', _0x4p5q);
-                tile.addEventListener('touchmove', _0x5q6r);
-                tile.addEventListener('touchend', _0x6r7s);
+                tile.addEventListener('touchstart', handleTouchStart);
+                tile.addEventListener('touchmove', handleTouchMove);
+                tile.addEventListener('touchend', handleTouchEnd);
+                // 防止鼠标右键菜单干扰 (PC友好)
                 tile.addEventListener('contextmenu', (e) => e.preventDefault());
                 
+                // 点击事件（PC或移动轻触fallback，但为了不与滑动冲突，会通过全局标志抑制）
+                // 注意: 触摸滑动结束后会阻止click，所以这里可以放心添加click做兼容
                 tile.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    // 如果刚刚完成滑动操作，跳过本次click避免重复移动
                     if (window._swipeJustTriggered) {
                         window._swipeJustTriggered = false;
                         return;
                     }
                     const row = parseInt(tile.getAttribute('data-row'));
                     const col = parseInt(tile.getAttribute('data-col'));
-                    _0x9k0l(row, col);
+                    tryMoveAdjacent(row, col);
                 });
                 
-                _0x1a2b.appendChild(tile);
+                puzzleGrid.appendChild(tile);
             }
         }
         
-        if (_0x8f9a) _0x1a2b.classList.add('win-glow');
-        else _0x1a2b.classList.remove('win-glow');
+        if (gameWon) puzzleGrid.classList.add('win-glow');
+        else puzzleGrid.classList.remove('win-glow');
     }
     
     // ----- 触摸滑动具体实现 -----
-    function _0x4p5q(e) {
-        e.preventDefault();
+    function handleTouchStart(e) {
+        e.preventDefault();      // 防止页面滚动或缩放（完全由js控制滑动）
         const tile = e.currentTarget;
         const row = parseInt(tile.getAttribute('data-row'));
         const col = parseInt(tile.getAttribute('data-col'));
-        _0x5c6e = row;
-        _0x7d8f = col;
+        touchStartRow = row;
+        touchStartCol = col;
         const touch = e.touches[0];
-        _0x1a2c = touch.clientX;
-        _0x3b4d = touch.clientY;
-        _0x9e0a = true;
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        isSwiping = true;
         window._swipeJustTriggered = false;
     }
     
-    function _0x5q6r(e) {
-        if (!_0x9e0a) return;
-        e.preventDefault();
+    function handleTouchMove(e) {
+        if (!isSwiping) return;
+        e.preventDefault();      // 关键：阻止页面滚动，保证滑动体验
+        // 可不需要额外逻辑，仅记录（在end时判断方向）
     }
     
-    function _0x6r7s(e) {
-        if (!_0x9e0a) return;
+    function handleTouchEnd(e) {
+        if (!isSwiping) return;
         e.preventDefault();
-        if (_0x5c6e === -1 || _0x7d8f === -1) {
-            _0x9e0a = false;
+        if (touchStartRow === -1 || touchStartCol === -1) {
+            isSwiping = false;
             return;
         }
         
         const changedTouch = e.changedTouches[0];
         if (!changedTouch) {
-            _0x9e0a = false;
+            isSwiping = false;
             return;
         }
         const endX = changedTouch.clientX;
         const endY = changedTouch.clientY;
-        const deltaX = endX - _0x1a2c;
-        const deltaY = endY - _0x3b4d;
+        const deltaX = endX - touchStartX;
+        const deltaY = endY - touchStartY;
         const absX = Math.abs(deltaX);
         const absY = Math.abs(deltaY);
         
         let moved = false;
-        if (Math.max(absX, absY) > _0x0b1c) {
+        // 滑动阈值超过20px才判定为有效滑动
+        if (Math.max(absX, absY) > SWIPE_THRESHOLD) {
             if (absX > absY) {
+                // 水平滑动
                 if (deltaX > 0) {
-                    moved = _0x0l1m(_0x5c6e, _0x7d8f, 0, 1);
+                    // 向右滑动 -> 移动当前数字向右，需要右侧格子为空
+                    moved = tryMoveByDirection(touchStartRow, touchStartCol, 0, 1);
                 } else {
-                    moved = _0x0l1m(_0x5c6e, _0x7d8f, 0, -1);
+                    // 向左滑动
+                    moved = tryMoveByDirection(touchStartRow, touchStartCol, 0, -1);
                 }
             } else {
+                // 垂直滑动
                 if (deltaY > 0) {
-                    moved = _0x0l1m(_0x5c6e, _0x7d8f, 1, 0);
+                    // 向下滑动
+                    moved = tryMoveByDirection(touchStartRow, touchStartCol, 1, 0);
                 } else {
-                    moved = _0x0l1m(_0x5c6e, _0x7d8f, -1, 0);
+                    // 向上滑动
+                    moved = tryMoveByDirection(touchStartRow, touchStartCol, -1, 0);
                 }
             }
         }
         
+        // 如果触发了滑动移动，设置全局标志，防止click重复触发移动
         if (moved) {
             window._swipeJustTriggered = true;
             setTimeout(() => {
                 if (window._swipeJustTriggered) window._swipeJustTriggered = false;
             }, 100);
         } else {
+            // 未移动(无效滑动) 或者滑动距离不足，不额外操作，但也要阻止click? 不需要阻止
             window._swipeJustTriggered = false;
         }
         
-        _0x5c6e = -1;
-        _0x7d8f = -1;
-        _0x9e0a = false;
+        // 重置状态
+        touchStartRow = -1;
+        touchStartCol = -1;
+        isSwiping = false;
     }
     
     // ----- 改变网格大小 -----
-    function _0x7s8t() {
-        let newSize = parseInt(_0x3c4d.value);
+    function changeSize() {
+        let newSize = parseInt(sizeInput.value);
         if (isNaN(newSize)) newSize = 4;
         newSize = Math.min(8, Math.max(2, newSize));
-        _0x3c4d.value = newSize;
-        if (newSize === _0x2f3a) {
-            _0x1m2n();
+        sizeInput.value = newSize;
+        if (newSize === currentSize) {
+            randomShuffle();  // 同尺寸重新开局
             return;
         }
-        _0x2f3a = newSize;
-        _0x4b5c = _0x2d3e();
-        _0x6d7e = 0;
-        _0x8f9a = false;
-        _0x0e1f.classList.add('hidden');
-        _0x1a2b.classList.remove('win-glow');
-        _0x3o4p();
-        _0x6h7i();
+        currentSize = newSize;
+        grid = getSolvedState();
+        stepCount = 0;
+        gameWon = false;
+        victoryToast.classList.add('hidden');
+        puzzleGrid.classList.remove('win-glow');
+        renderGrid();
+        updateUI();
+        // 可选择性再打乱一下，但保持顺序让用户自己随机
     }
     
     // ----- 事件绑定 -----
-    function _0x8t9u() {
-        _0x5e6f.addEventListener('click', () => _0x1m2n());
-        _0x7a8b.addEventListener('click', () => _0x2n3o());
-        _0x3c4d.addEventListener('change', _0x7s8t);
+    function bindControls() {
+        randomBtn.addEventListener('click', () => randomShuffle());
+        resetBtn.addEventListener('click', () => resetToOrder());
+        sizeInput.addEventListener('change', changeSize);
     }
     
     // ----- 初始化游戏 -----
-    function _0x0u1v() {
-        _0x2f3a = 4;
-        _0x3c4d.value = 4;
-        _0x4b5c = _0x2d3e();
-        _0x6d7e = 0;
-        _0x8f9a = false;
-        _0x3o4p();
-        _0x6h7i();
-        _0x8t9u();
+    function init() {
+        currentSize = 4;
+        sizeInput.value = 4;
+        grid = getSolvedState();
+        stepCount = 0;
+        gameWon = false;
+        renderGrid();
+        updateUI();
+        bindControls();
+        // 开局轻微打乱增加挑战性
         setTimeout(() => {
-            _0x1m2n();
+            randomShuffle();
         }, 80);
     }
     
-    _0x0u1v();
+    init();
 })();
