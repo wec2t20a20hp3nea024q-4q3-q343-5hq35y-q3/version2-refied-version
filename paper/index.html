@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Mock Exam Paper Builder | Editable Header</title>
+    <!-- KaTeX for rendering LaTeX math -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}] });"></script>
+    <!-- html2pdf for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app-container">
+    <!-- LEFT PANEL: Editor -->
+    <div class="editor-panel">
+        <h2>Paper Builder</h2>
+        <p style="font-size: 14px; color: #2c3e66;">Enter questions using <strong>LaTeX</strong> (e.g., $...$).<br>Each answer has a <strong>rectangle border</strong> with lines.</p>
+
+        <!-- Editable Header -->
+        <div style="margin-bottom: 20px;">
+            <label style="font-weight: bold;">Header HTML :</label>
+            <textarea id="headerHtmlInput" rows="8" style="width:100%; margin-top:8px; font-family: monospace; border:1px solid #ccc; border-radius:8px; padding:8px;">&lt;div class="school-name"&gt;WAH YAN COLLEGE, KOWLOON&lt;/div&gt;
+&lt;h1&gt;2026-S6 Mock Examination&lt;/h1&gt;
+&lt;h3&gt;MATHEMATICS Extended Part&lt;/h3&gt;
+&lt;h3&gt;Module 2 (Algebra and Calculus)&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;Question-Answer Book&lt;/strong&gt; &amp;nbsp;|&amp;nbsp; Time allowed: 2½ hours&lt;/p&gt;
+&lt;p style="font-size:13px;"&gt;This paper must be answered in English &amp;nbsp;|&amp;nbsp; All working must be clearly shown&lt;/p&gt;</textarea>
+        </div>
+
+        <!-- Questions list -->
+        <div class="questions-list" id="questionsContainer"></div>
+        <button id="addQuestionBtn" class="add-btn">+ Add New Question</button>
+        <div class="note">
+            Tip: Use $...$ for inline math, $$...$$ for display math.<br>
+            "Pages per question" = number of full-page answer rectangles (extra pages show "continued").
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: Preview + Download -->
+    <div class="preview-panel">
+        <div class="preview-header">
+            <h2>Document Preview</h2>
+            <div class="btn-group">
+                <button id="refreshPreviewBtn">⟳ Refresh Preview</button>
+                <button id="downloadPDFBtn">Save as PDF</button>
+            </div>
+        </div>
+        <div id="livePreviewArea" class="mock-exam-paper">
+            <!-- dynamic preview will render here -->
+            <div style="text-align: center; padding: 40px;">Loading preview...</div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
