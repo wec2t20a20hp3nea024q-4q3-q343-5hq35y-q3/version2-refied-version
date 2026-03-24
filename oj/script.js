@@ -1,33 +1,81 @@
+const STORAGE_KEY = 'dse_quiz_state';
+
+// Global saved state from localStorage
+let savedState = null;
+let restoredFirstBatch = false;
+
+function saveState() {
+    const state = {
+        answers: {},
+        scores: {},
+        totalScore: document.getElementById('totalScoreDisplay').innerText,
+        showExplanations: document.getElementById('toggleExplanation')?.checked || true
+    };
+    currentQuestionItems.forEach(item => {
+        const ans = item.getAnswer ? item.getAnswer() : '';
+        if (ans) state.answers[item.data.id] = ans;
+        if (item.pointsAdded) state.scores[item.data.id] = true;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    savedState = state;
+    return state;
+}
+
+function loadState() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return null;
+    try {
+        return JSON.parse(saved);
+    } catch (e) {
+        console.error('Failed to parse saved state', e);
+        return null;
+    }
+}
+
+function applySavedStateToItem(item) {
+    if (!savedState) return;
+    const id = item.data.id;
+    if (savedState.answers[id]) {
+        const answer = savedState.answers[id];
+        if (item.data.type === 'MC') {
+            const radios = document.getElementsByName(item.radioGroupName);
+            for (let radio of radios) {
+                if (radio.value === answer) {
+                    radio.checked = true;
+                    break;
+                }
+            }
+        } else if (item.resetElement && item.resetElement.tagName === 'TEXTAREA') {
+            item.resetElement.value = answer;
+        }
+    }
+    if (savedState.scores[id]) {
+        item.pointsAdded = true;
+    }
+}
+
 function getUniqueValues(array, key) {
     const values = array.map(item => item[key]).filter(v => v);
     return [...new Set(values)].sort();
 }
+
 function searchQuestions(question, searchTerm) {
     if (!searchTerm) return true;
-    
     const term = searchTerm.toLowerCase().trim();
-    
-    // Search in question text
     if (question.text.toLowerCase().includes(term)) return true;
-    
-    // Search in options (for MC questions)
     if (question.options && Array.isArray(question.options)) {
         for (let option of question.options) {
             if (option.toLowerCase().includes(term)) return true;
         }
     }
-    
-    // Search in explanation/answer (optional)
     if (question.explain && question.explain.toLowerCase().includes(term)) return true;
     if (question.answer && question.answer.toLowerCase().includes(term)) return true;
-    
     return false;
 }
+
 // Back to Top Button Logic
 (function() {
     const backToTopBtn = document.getElementById('backToTopBtn');
-    
-    // Show/hide button based on scroll position
     window.addEventListener('scroll', function() {
         if (window.pageYOffset > 300) {
             backToTopBtn.classList.add('show');
@@ -35,23 +83,19 @@ function searchQuestions(question, searchTerm) {
             backToTopBtn.classList.remove('show');
         }
     });
-    
-    // Scroll to top when clicked
     backToTopBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 })();
+
 // Global variables
-let currentQuestions = [];        // Full filtered list
-let currentQuestionItems = [];    // All rendered items (persists across loads)
-let renderedCount = 0;            // Number of questions currently rendered
-const BATCH_SIZE = 10;            // Load 10 questions at a time
-let showExplanations = true;      // global toggle state
-let loadingMore = false;          // Prevent multiple simultaneous loads
+let currentQuestions = [];
+let currentQuestionItems = [];
+let renderedCount = 0;
+const BATCH_SIZE = 10;
+let showExplanations = true;
+let loadingMore = false;
 
 // DOM elements
 const subjectSelect = document.getElementById('subjectFilter');
@@ -66,7 +110,22 @@ const loadMoreContainer = document.getElementById('loadMoreContainer');
 const questionCountDisplay = document.getElementById('questionCountDisplay');
 const totalQuestionCountDisplay = document.getElementById('totalQuestionCountDisplay');
 
-// Populate subject dropdown
+// LOAD ALL: reference to the new button (create if not exists)
+let loadAllBtn = document.getElementById('loadAllBtn');
+if (!loadAllBtn) {
+    // If button not found, create it and append to stats bar (assumed class="stats-bar")
+    const statsBar = document.querySelector('.stats-bar');
+    if (statsBar) {
+        loadAllBtn = document.createElement('button');
+        loadAllBtn.id = 'loadAllBtn';
+        loadAllBtn.className = 'load-all-btn';
+        loadAllBtn.textContent = 'Load all questions';
+        statsBar.appendChild(loadAllBtn);
+    } else {
+        console.warn('Stats bar not found, cannot create Load all button');
+    }
+}
+
 function populateSubjects() {
     const subjects = getUniqueValues(database, 'subject');
     subjectSelect.innerHTML = '<option value="all">All Subjects</option>';
@@ -78,7 +137,6 @@ function populateSubjects() {
     });
 }
 
-// Update topic dropdown based on selected subject
 function updateTopics() {
     const selectedSubject = subjectSelect.value;
     let topics;
@@ -98,11 +156,9 @@ function updateTopics() {
         topicSelect.appendChild(option);
     });
     topicSelect.disabled = false;
-    // Reset subtopic and type
     updateSubtopics();
 }
 
-// Update subtopic dropdown based on subject and topic
 function updateSubtopics() {
     const selectedSubject = subjectSelect.value;
     const selectedTopic = topicSelect.value;
@@ -123,14 +179,11 @@ function updateSubtopics() {
         subtopicSelect.appendChild(option);
     });
     subtopicSelect.disabled = false;
-    // Enable type select
     typeSelect.disabled = false;
-    // After updating, load questions
-    loadQuestions();
+    loadQuestions(false);
 }
 
-// Load questions based on current filters (full list)
-function loadQuestions() {
+function loadQuestions(clearState = false) {
     const subject = subjectSelect.value;
     const topic = topicSelect.value;
     const subtopic = subtopicSelect.value;
@@ -138,41 +191,43 @@ function loadQuestions() {
     const searchTerm = document.getElementById('searchInput').value;
 
     let filtered = database;
-    
-    // Apply filters
     if (subject !== 'all') filtered = filtered.filter(q => q.subject === subject);
     if (topic !== 'all') filtered = filtered.filter(q => q.topic === topic);
     if (subtopic !== 'all') filtered = filtered.filter(q => q.subtopic === subtopic);
     if (type !== 'all') filtered = filtered.filter(q => q.type === type);
-    
-    // Apply search
-    if (searchTerm) {
-        filtered = filtered.filter(q => searchQuestions(q, searchTerm));
-    }
+    if (searchTerm) filtered = filtered.filter(q => searchQuestions(q, searchTerm));
 
     currentQuestions = filtered;
-    // Reset rendering state
     renderedCount = 0;
     currentQuestionItems = [];
     questionsContainer.innerHTML = '';
     loadMoreContainer.innerHTML = '';
-    // Update total count display
     totalQuestionCountDisplay.textContent = currentQuestions.length;
-    // Load first batch
+
+    if (clearState) {
+        localStorage.removeItem(STORAGE_KEY);
+        savedState = null;
+        restoredFirstBatch = false;
+    }
+
+    // LOAD ALL: re-enable the load all button if it exists
+    if (loadAllBtn) {
+        loadAllBtn.disabled = false;
+        loadAllBtn.style.display = ''; // ensure visible
+    }
+
     loadMore();
     updateScoreSummary();
 }
 
-// Update question count display
 function updateQuestionCount() {
     questionCountDisplay.textContent = renderedCount;
 }
 
-// Render a batch of questions (starting from renderedCount)
 function renderBatch() {
     const start = renderedCount;
     const end = Math.min(start + BATCH_SIZE, currentQuestions.length);
-    if (start >= end) return false; // no more to render
+    if (start >= end) return false;
 
     for (let idx = start; idx < end; idx++) {
         const q = currentQuestions[idx];
@@ -180,7 +235,6 @@ function renderBatch() {
         card.className = 'question-card';
         card.dataset.id = idx;
 
-        // Title row
         const titleRow = document.createElement('div');
         titleRow.className = 'question-title-row';
 
@@ -209,7 +263,6 @@ function renderBatch() {
         titleRow.appendChild(pointsSpan);
         card.appendChild(titleRow);
 
-        // Input area
         const inputWrapper = document.createElement('div');
         inputWrapper.className = 'answer-input';
         let getAnswerFunc = null;
@@ -244,7 +297,6 @@ function renderBatch() {
             };
             resetElement = { type: 'radio', name: groupName };
         } else {
-            // LQ: textarea
             const textarea = document.createElement('textarea');
             textarea.placeholder = 'Enter your answer...';
             textarea.rows = 4;
@@ -254,7 +306,6 @@ function renderBatch() {
         }
         card.appendChild(inputWrapper);
 
-        // Feedback area
         const feedbackDiv = document.createElement('div');
         feedbackDiv.className = 'feedback';
         feedbackDiv.id = `feedback_${idx}_${Date.now()}_${Math.random()}`;
@@ -263,8 +314,7 @@ function renderBatch() {
 
         questionsContainer.appendChild(card);
 
-        // Store item info
-        currentQuestionItems.push({
+        const item = {
             id: idx,
             data: q,
             getAnswer: getAnswerFunc,
@@ -273,9 +323,10 @@ function renderBatch() {
             radioGroupName: radioGroupName,
             checkButton: checkBtn,
             pointsAdded: false
-        });
+        };
+        currentQuestionItems.push(item);
+        applySavedStateToItem(item);
 
-        // Bind check button event for this item
         checkBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             const item = currentQuestionItems.find(i => i.id === idx);
@@ -284,58 +335,95 @@ function renderBatch() {
     }
 
     renderedCount = end;
-    updateQuestionCount(); // Update after batch is added
-    return true; // rendered at least one
+    updateQuestionCount();
+
+    if (!restoredFirstBatch && savedState) {
+        totalScoreSpan.innerText = savedState.totalScore;
+        const toggle = document.getElementById('toggleExplanation');
+        if (toggle) {
+            toggle.checked = savedState.showExplanations;
+            showExplanations = savedState.showExplanations;
+            toggleExplanationsVisibility();
+        }
+        restoredFirstBatch = true;
+    }
+
+    return true;
 }
 
-// Load more questions (triggered by scroll or initial load)
 function loadMore() {
     if (loadingMore) return;
     if (renderedCount >= currentQuestions.length) {
-        // All loaded, remove any scroll indicator or message
         if (loadMoreContainer.innerHTML !== '') {
             loadMoreContainer.innerHTML = '<div style="text-align:center; padding:10px; color:#666;">✨ All questions loaded</div>';
         }
+        // LOAD ALL: disable the button when all are loaded
+        if (loadAllBtn) loadAllBtn.disabled = true;
         return;
     }
 
     loadingMore = true;
-    // Use setTimeout to allow UI to breathe and prevent blocking
     setTimeout(() => {
         const rendered = renderBatch();
         loadingMore = false;
         if (!rendered) {
-            // No more questions, show message
             loadMoreContainer.innerHTML = '<div style="text-align:center; padding:10px; color:#666;">✨ All questions loaded</div>';
+            if (loadAllBtn) loadAllBtn.disabled = true;
         } else {
-            // If there are more questions, we may need to keep the container empty or show a subtle loading indicator
-            // But since we auto-load on scroll, we don't need a button.
-            // Clear any previous message if there are still questions left
             if (renderedCount < currentQuestions.length) {
                 loadMoreContainer.innerHTML = '';
             } else {
                 loadMoreContainer.innerHTML = '<div style="text-align:center; padding:10px; color:#666;">✨ All questions loaded</div>';
+                if (loadAllBtn) loadAllBtn.disabled = true;
             }
         }
-        // Apply explanation visibility to new elements
         toggleExplanationsVisibility();
         renderMath();
     }, 50);
 }
 
-// Scroll event handler: load more when near bottom
+// LOAD ALL: load all remaining questions at once
+function loadAllQuestions() {
+    if (renderedCount >= currentQuestions.length) {
+        if (loadAllBtn) loadAllBtn.disabled = true;
+        return;
+    }
+    // Disable the button to prevent multiple clicks
+    if (loadAllBtn) loadAllBtn.disabled = true;
+    // Load all remaining in a loop (but use setTimeout to avoid blocking UI)
+    function loadNextBatch() {
+        if (renderedCount >= currentQuestions.length) {
+            // All loaded, update UI
+            loadMoreContainer.innerHTML = '<div style="text-align:center; padding:10px; color:#666;">✨ All questions loaded</div>';
+            if (loadAllBtn) loadAllBtn.disabled = true;
+            toggleExplanationsVisibility();
+            renderMath();
+            return;
+        }
+        const rendered = renderBatch();
+        if (rendered) {
+            // Use requestAnimationFrame or small timeout to allow UI updates
+            setTimeout(loadNextBatch, 20);
+        } else {
+            // No more questions
+            if (loadAllBtn) loadAllBtn.disabled = true;
+            toggleExplanationsVisibility();
+            renderMath();
+        }
+    }
+    loadNextBatch();
+}
+
 function handleScroll() {
     if (loadingMore) return;
     if (renderedCount >= currentQuestions.length) return;
-
     const scrollPosition = window.scrollY + window.innerHeight;
-    const threshold = document.documentElement.scrollHeight - 200; // 200px from bottom
+    const threshold = document.documentElement.scrollHeight - 200;
     if (scrollPosition >= threshold) {
         loadMore();
     }
 }
 
-// Toggle explanation visibility without re-rendering
 function toggleExplanationsVisibility() {
     const explanationSpans = document.querySelectorAll('.explanation-text');
     explanationSpans.forEach(span => {
@@ -343,7 +431,6 @@ function toggleExplanationsVisibility() {
     });
 }
 
-// Render math with KaTeX after DOM updates
 function renderMath() {
     if (typeof renderMathInElement === 'function') {
         renderMathInElement(document.body, {
@@ -354,12 +441,10 @@ function renderMath() {
             throwOnError: false
         });
     } else {
-        // Wait 100ms and try again (library not loaded yet)
         setTimeout(renderMath, 100);
     }
 }
 
-// Check a single question (MC or LQ)
 function checkSingleQuestion(item) {
     const q = item.data;
     const userAnswer = item.getAnswer();
@@ -386,7 +471,7 @@ function checkSingleQuestion(item) {
                 item.pointsAdded = false;
             }
         }
-        renderMath(); // re-render math in case explain contains LaTeX
+        renderMath();
     } else if (q.type === 'LQ') {
         const reference = q.explain || 'No reference answer provided.';
         const userShow = userAnswer || '_user_input_is_null';
@@ -400,14 +485,12 @@ function checkSingleQuestion(item) {
                 <button class="lq-btn wrong" data-action="wrong">✗ Wrong</button>
             </div>
         `;
-        // Re-apply display style after setting innerHTML
         const explanationDiv = fbDiv.querySelector('.explanation-text');
         if (explanationDiv) explanationDiv.style.display = explanationDisplayStyle;
         
         fbDiv.className = 'feedback info';
-        // Render math inside the new content
         renderMath();
-        // Attach event listeners to the buttons
+        
         const correctBtn = fbDiv.querySelector('.lq-btn.correct');
         const wrongBtn = fbDiv.querySelector('.lq-btn.wrong');
         const handleCorrect = () => {
@@ -416,6 +499,7 @@ function checkSingleQuestion(item) {
                 addPoints(q.points);
             }
             fbDiv.querySelector('.lq-buttons').innerHTML = '<span style="color:green;">✓ Marked as correct</span>';
+            saveState();
         };
         const handleWrong = () => {
             if (item.pointsAdded) {
@@ -423,13 +507,15 @@ function checkSingleQuestion(item) {
                 item.pointsAdded = false;
             }
             fbDiv.querySelector('.lq-buttons').innerHTML = '<span style="color:red;">✗ Marked as wrong</span>';
+            saveState();
         };
         correctBtn.onclick = handleCorrect;
         wrongBtn.onclick = handleWrong;
     }
+    
+    saveState();
 }
 
-// Add points to total score and update display
 function addPoints(points) {
     let current = parseInt(totalScoreSpan.textContent) || 0;
     current += points;
@@ -442,7 +528,6 @@ function subtractPoints(points) {
     totalScoreSpan.textContent = current;
 }
 
-// Reset all answers and scores
 function resetAll() {
     for (let item of currentQuestionItems) {
         item.feedbackDiv.innerHTML = 'Click Check to grade.';
@@ -462,15 +547,14 @@ function resetAll() {
     }
     totalScoreSpan.textContent = '0';
     updateScoreSummary();
+    saveState();
 }
 
-// Update max possible score based on displayed questions
 function updateScoreSummary() {
     const maxPossible = currentQuestions.reduce((sum, q) => sum + q.points, 0);
     maxScoreSpan.textContent = maxPossible;
 }
 
-// Helper to escape HTML
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, function(m) {
@@ -481,55 +565,59 @@ function escapeHtml(str) {
     });
 }
 
-// Event listeners for filters
 function bindFilterEvents() {
     subjectSelect.addEventListener('change', () => {
         updateTopics();
+        loadQuestions(true);
     });
     topicSelect.addEventListener('change', () => {
         updateSubtopics();
+        loadQuestions(true);
     });
     subtopicSelect.addEventListener('change', () => {
-        loadQuestions();
+        loadQuestions(true);
     });
     typeSelect.addEventListener('change', () => {
-        loadQuestions();
+        loadQuestions(true);
     });
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        // Search as you type
         searchInput.addEventListener('input', () => {
-            loadQuestions();
+            loadQuestions(true);
         });
     }
 }
 
-// Initialization
 function init() {
+    savedState = loadState();
     populateSubjects();
-    updateTopics();   // This also loads questions after building subtopics
+    updateTopics();
     bindFilterEvents();
     resetBtn.addEventListener('click', resetAll);
     
-    // Setup explanation toggle (no re-render)
     const toggleCheckbox = document.getElementById('toggleExplanation');
     if (toggleCheckbox) {
         toggleCheckbox.checked = showExplanations;
         toggleCheckbox.addEventListener('change', (e) => {
             showExplanations = e.target.checked;
             toggleExplanationsVisibility();
+            saveState();
         });
     }
     
-    // Add scroll listener for auto-load
     window.addEventListener('scroll', handleScroll);
-    // Also check on window resize (might affect scroll position)
     window.addEventListener('resize', handleScroll);
+    window.addEventListener('beforeunload', saveState);
+    
+    // LOAD ALL: attach event listener
+    if (loadAllBtn) {
+        loadAllBtn.addEventListener('click', loadAllQuestions);
+    }
 }
 
 init();
 
-// ====================== Login integration (from account.js) ======================
+// ====================== Login integration ======================
 const loginButton = document.getElementById('loginButton');
 const dropdownMenu = document.getElementById('dropdownMenu');
 const loginModal = document.getElementById('loginModal');
@@ -582,11 +670,13 @@ loginSubmit.addEventListener('click', () => {
         alert('Authentication not available. Please check account.js.');
     }
 });
+
 document.getElementById('submitAllBtn').addEventListener('click', () => {
     for (let item of currentQuestionItems) {
         checkSingleQuestion(item);
     }
 });
+
 function closeModal() {
     loginModal.style.display = 'none';
 }
