@@ -3,8 +3,238 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Home | Studyhub v0.0.0.alpha</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Home | Quiz Maker Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+        }
+
+        body {
+            background: #f0f7ff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #1e3c72;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #2c7da0;
+        }
+
+        .login-area {
+            position: relative;
+        }
+
+        .login-button {
+            background: #eef2ff;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            color: #1e3c72;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .login-button:hover {
+            background: #e0e8ff;
+        }
+
+        /* Dropdown menu */
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 0.5rem 0;
+            min-width: 120px;
+            display: none;
+            z-index: 10;
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            color: #1e3c72;
+            transition: background 0.2s;
+        }
+
+        .dropdown-menu a:hover {
+            background: #f0f4fa;
+        }
+
+        /* Modal overlay */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h3 {
+            margin-bottom: 1rem;
+            color: #1e3c72;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            margin-bottom: 1rem;
+            border: 1.5px solid #dfe7ef;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .modal-content button {
+            width: 100%;
+            background: #2c7da0;
+            color: white;
+            border: none;
+            padding: 0.6rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .modal-content button:hover {
+            background: #1f5e7a;
+        }
+
+        .close-modal {
+            margin-top: 1rem;
+            background: none;
+            color: #5b6e8c;
+            border: 1px solid #cbd5e1;
+        }
+
+        /* Main content (same as before) */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            flex: 1;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            color: #1e3c72;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero p {
+            color: #5b6e8c;
+            font-size: 1.1rem;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.1);
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #1e3c72;
+        }
+
+        .card p {
+            color: #5b6e8c;
+            line-height: 1.5;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: #8ba0bc;
+            border-top: 1px solid #e2edf7;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 700px) {
+            .top-bar {
+                flex-direction: column;
+                text-align: center;
+            }
+            .nav-links {
+                justify-content: center;
+            }
+            .hero h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="top-bar">
@@ -34,7 +264,7 @@
 
     <div class="container">
         <div class="hero">
-            <h1>StudyHub</h1>
+            <h1>(porn)StudyHub</h1>
             <p>Create, practice, and manage exams – all in one place.</p>
         </div>
 
@@ -49,15 +279,15 @@
                 <h3>Question Creator</h3>
                 <p>Build your own question bank. Import/export JSON, edit questions, and generate PDF exam papers.</p>
             </a>
-            <a href="./pastpaper/" class="card">
+            <a href="./pastpaper/index.html" class="card">
                 <div class="card-icon">📂</div>
                 <h3>Past Papers</h3>
                 <p>Browse and download past exam papers organised by subject and year.</p>
             </a>
-            <a href="./subjects" class="card">
+            <a href="./paper/index.html" class="card">
                 <div class="card-icon"></div>
-                <h3>Subject Navigator</h3>
-                <p>Visual subject map – click to jump directly to your chosen subject page.</p>
+                <h3>Paper creater</h3>
+                <p>Directly create papers.</p>
             </a>
             <a href="./timeline" class="card">
                 <div class="card-icon"></div>
@@ -77,10 +307,83 @@
     </footer>
     
     <script src="account.js"></script>
-    <script src="script.js">
+    <script>
       
         // DOM elements
-        
+        const loginButton = document.getElementById('loginButton');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        const loginModal = document.getElementById('loginModal');
+        const usernameInput = document.getElementById('usernameInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const loginSubmit = document.getElementById('loginSubmit');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const logoutLink = document.getElementById('logoutLink');
+
+        // Update UI based on currentUser
+        function updateUI() {
+            if (currentUser) {
+                loginButton.textContent = `👤 ${currentUser.username}`;
+                dropdownMenu.style.display = 'none'; // hide dropdown initially
+            } else {
+                loginButton.textContent = `🔒 Login`;
+                dropdownMenu.style.display = 'none';
+            }
+        }
+
+        // Show dropdown on click (only if logged in)
+        loginButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentUser) {
+                // Toggle dropdown
+                dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+            } else {
+                // Show login modal
+                loginModal.style.display = 'flex';
+            }
+        });
+
+        // Hide dropdown when clicking elsewhere
+        document.addEventListener('click', (e) => {
+            if (!loginArea.contains(e.target)) {
+                dropdownMenu.style.display = 'none';
+            }
+        });
+
+        // Login submission
+        loginSubmit.addEventListener('click', () => {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+            const user = authenticate(username, password);
+            if (user) {
+                saveCurrentUser(user);
+                updateUI();
+                loginModal.style.display = 'none';
+                usernameInput.value = '';
+                passwordInput.value = '';
+            } else {
+                alert('Invalid username or password');
+            }
+        });
+
+        // Close modal
+        function closeModal() {
+            loginModal.style.display = 'none';
+        }
+        closeModalBtn.addEventListener('click', closeModal);
+        window.addEventListener('click', (e) => {
+            if (e.target === loginModal) closeModal();
+        });
+
+        // Logout
+        logoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            saveCurrentUser(null);
+            updateUI();
+            dropdownMenu.style.display = 'none';
+        });
+
+        // Initial update
+        updateUI();
     </script>
 </body>
 </html>
