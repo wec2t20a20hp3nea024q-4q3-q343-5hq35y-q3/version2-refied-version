@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>DSE Online Judge v2.0.0</title>
+    <title>DSE Online Judge</title>
     <link rel="stylesheet" href="styles.css">
     <!-- KaTeX CSS and JS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
@@ -77,6 +77,14 @@
 
         <div class="stats-bar">
             <div class="score-area">Score: <span id="totalScoreDisplay">0</span> / <span id="maxScoreDisplay">0</span></div>
+            <div class="question-count-area">Questions: <span id="questionCountDisplay">0</span> / <span id="totalQuestionCountDisplay">0</span></div>
+            <div class="toggle-container">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggleExplanation">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label">Show Explanations</span>
+            </div>
             <div class="btn-group">
                 <button class="btn-submit" id="submitAllBtn">Submit All</button>
                 <button class="btn-reset" id="resetBtn">Reset All</button>
@@ -86,10 +94,10 @@
         <div id="questionsContainer" class="questions-area">
             <div style="text-align: center; padding: 2rem;">Select filters to load questions...</div>
         </div>
+        <div id="loadMoreContainer" style="text-align: center; margin-top: 20px;"></div>
     </div>
     <button id="backToTopBtn" class="back-to-top" title="Back to Top">↑</button>
     <footer>
-        © 2025 Quiz Maker Hub
     </footer>
 
     <script src="../account.js"></script>
@@ -98,9 +106,11 @@
     <script>
         // ======================== DATABASE ========================
         
-
         // Helper: get unique values for a given key
-        
+        function getUniqueValues(array, key) {
+            const values = array.map(item => item[key]).filter(v => v);
+            return [...new Set(values)].sort();
+        }
 
         updateLoginUI();
     </script>
