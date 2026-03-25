@@ -1,4 +1,14 @@
 const STORAGE_KEY = 'dse_quiz_state';
+const FILTERS_STORAGE_KEY = 'dse_quiz_filters';
+
+// Assign a stable unique ID to each question if not already present
+if (typeof database !== 'undefined') {
+    database.forEach((q, idx) => {
+        if (!q.uid) {
+            q.uid = 'q_' + idx; // stable ID based on index
+        }
+    });
+}
 
 // Global saved state from localStorage
 let savedState = null;
@@ -13,8 +23,8 @@ function saveState() {
     };
     currentQuestionItems.forEach(item => {
         const ans = item.getAnswer ? item.getAnswer() : '';
-        if (ans) state.answers[item.data.id] = ans;
-        if (item.pointsAdded) state.scores[item.data.id] = true;
+        if (ans) state.answers[item.data.uid] = ans;  // use UID as key
+        if (item.pointsAdded) state.scores[item.data.uid] = true;
     });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     savedState = state;
@@ -32,11 +42,33 @@ function loadState() {
     }
 }
 
+function saveFilters() {
+    const filters = {
+        subject: subjectSelect.value,
+        topic: topicSelect.value,
+        subtopic: subtopicSelect.value,
+        type: typeSelect.value,
+        search: document.getElementById('searchInput').value
+    };
+    localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
+}
+
+function loadFilters() {
+    const saved = localStorage.getItem(FILTERS_STORAGE_KEY);
+    if (!saved) return null;
+    try {
+        return JSON.parse(saved);
+    } catch (e) {
+        console.error('Failed to parse filters', e);
+        return null;
+    }
+}
+
 function applySavedStateToItem(item) {
     if (!savedState) return;
-    const id = item.data.id;
-    if (savedState.answers[id]) {
-        const answer = savedState.answers[id];
+    const uid = item.data.uid;
+    if (savedState.answers[uid]) {
+        const answer = savedState.answers[uid];
         if (item.data.type === 'MC') {
             const radios = document.getElementsByName(item.radioGroupName);
             for (let radio of radios) {
@@ -49,7 +81,7 @@ function applySavedStateToItem(item) {
             item.resetElement.value = answer;
         }
     }
-    if (savedState.scores[id]) {
+    if (savedState.scores[uid]) {
         item.pointsAdded = true;
     }
 }
@@ -110,10 +142,9 @@ const loadMoreContainer = document.getElementById('loadMoreContainer');
 const questionCountDisplay = document.getElementById('questionCountDisplay');
 const totalQuestionCountDisplay = document.getElementById('totalQuestionCountDisplay');
 
-// LOAD ALL: reference to the new button (create if not exists)
+// LOAD ALL: reference to the button (create if not exists)
 let loadAllBtn = document.getElementById('loadAllBtn');
 if (!loadAllBtn) {
-    // If button not found, create it and append to stats bar (assumed class="stats-bar")
     const statsBar = document.querySelector('.stats-bar');
     if (statsBar) {
         loadAllBtn = document.createElement('button');
@@ -137,7 +168,7 @@ function populateSubjects() {
     });
 }
 
-function updateTopics() {
+function updateTopics(skipLoad = false) {
     const selectedSubject = subjectSelect.value;
     let topics;
     if (selectedSubject === 'all') {
@@ -156,10 +187,10 @@ function updateTopics() {
         topicSelect.appendChild(option);
     });
     topicSelect.disabled = false;
-    updateSubtopics();
+    updateSubtopics(skipLoad);
 }
 
-function updateSubtopics() {
+function updateSubtopics(skipLoad = false) {
     const selectedSubject = subjectSelect.value;
     const selectedTopic = topicSelect.value;
     let subtopics;
@@ -180,10 +211,12 @@ function updateSubtopics() {
     });
     subtopicSelect.disabled = false;
     typeSelect.disabled = false;
-    loadQuestions(false);
+    if (!skipLoad) {
+        loadQuestions(); // no longer pass clearState
+    }
 }
 
-function loadQuestions(clearState = false) {
+function loadQuestions() {
     const subject = subjectSelect.value;
     const topic = topicSelect.value;
     const subtopic = subtopicSelect.value;
@@ -204,16 +237,11 @@ function loadQuestions(clearState = false) {
     loadMoreContainer.innerHTML = '';
     totalQuestionCountDisplay.textContent = currentQuestions.length;
 
-    if (clearState) {
-        localStorage.removeItem(STORAGE_KEY);
-        savedState = null;
-        restoredFirstBatch = false;
-    }
+    // DO NOT clear savedState – answers will be restored for questions that are present
 
-    // LOAD ALL: re-enable the load all button if it exists
     if (loadAllBtn) {
         loadAllBtn.disabled = false;
-        loadAllBtn.style.display = ''; // ensure visible
+        loadAllBtn.style.display = '';
     }
 
     loadMore();
@@ -272,7 +300,7 @@ function renderBatch() {
         if (q.type === 'MC') {
             const optionsDiv = document.createElement('div');
             optionsDiv.className = 'options-area';
-            const groupName = `q_${idx}_${Date.now()}_${Math.random()}`;
+            const groupName = `q_${q.uid}_${Date.now()}_${Math.random()}`; // use uid in group name for uniqueness
             radioGroupName = groupName;
             const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
             q.options.forEach((opt, optIdx) => {
@@ -308,7 +336,7 @@ function renderBatch() {
 
         const feedbackDiv = document.createElement('div');
         feedbackDiv.className = 'feedback';
-        feedbackDiv.id = `feedback_${idx}_${Date.now()}_${Math.random()}`;
+        feedbackDiv.id = `feedback_${q.uid}_${Date.now()}_${Math.random()}`;
         feedbackDiv.innerHTML = 'Click Check to grade.';
         card.appendChild(feedbackDiv);
 
@@ -329,7 +357,7 @@ function renderBatch() {
 
         checkBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const item = currentQuestionItems.find(i => i.id === idx);
+            const item = currentQuestionItems.find(i => i.data.uid === q.uid);
             if (item) checkSingleQuestion(item);
         });
     }
@@ -357,7 +385,6 @@ function loadMore() {
         if (loadMoreContainer.innerHTML !== '') {
             loadMoreContainer.innerHTML = '<div style="text-align:center; padding:10px; color:#666;">✨ All questions loaded</div>';
         }
-        // LOAD ALL: disable the button when all are loaded
         if (loadAllBtn) loadAllBtn.disabled = true;
         return;
     }
@@ -382,18 +409,14 @@ function loadMore() {
     }, 50);
 }
 
-// LOAD ALL: load all remaining questions at once
 function loadAllQuestions() {
     if (renderedCount >= currentQuestions.length) {
         if (loadAllBtn) loadAllBtn.disabled = true;
         return;
     }
-    // Disable the button to prevent multiple clicks
     if (loadAllBtn) loadAllBtn.disabled = true;
-    // Load all remaining in a loop (but use setTimeout to avoid blocking UI)
     function loadNextBatch() {
         if (renderedCount >= currentQuestions.length) {
-            // All loaded, update UI
             loadMoreContainer.innerHTML = '<div style="text-align:center; padding:10px; color:#666;">✨ All questions loaded</div>';
             if (loadAllBtn) loadAllBtn.disabled = true;
             toggleExplanationsVisibility();
@@ -402,10 +425,8 @@ function loadAllQuestions() {
         }
         const rendered = renderBatch();
         if (rendered) {
-            // Use requestAnimationFrame or small timeout to allow UI updates
             setTimeout(loadNextBatch, 20);
         } else {
-            // No more questions
             if (loadAllBtn) loadAllBtn.disabled = true;
             toggleExplanationsVisibility();
             renderMath();
@@ -547,7 +568,7 @@ function resetAll() {
     }
     totalScoreSpan.textContent = '0';
     updateScoreSummary();
-    saveState();
+    saveState(); // this will overwrite saved state with empty answers
 }
 
 function updateScoreSummary() {
@@ -567,37 +588,73 @@ function escapeHtml(str) {
 
 function bindFilterEvents() {
     subjectSelect.addEventListener('change', () => {
-        updateTopics();
-        loadQuestions(true);
+        updateTopics(false);
+        loadQuestions();
+        saveFilters();
     });
     topicSelect.addEventListener('change', () => {
-        updateSubtopics();
-        loadQuestions(true);
+        updateSubtopics(false);
+        loadQuestions();
+        saveFilters();
     });
     subtopicSelect.addEventListener('change', () => {
-        loadQuestions(true);
+        loadQuestions();
+        saveFilters();
     });
     typeSelect.addEventListener('change', () => {
-        loadQuestions(true);
+        loadQuestions();
+        saveFilters();
     });
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', () => {
-            loadQuestions(true);
+            loadQuestions();
+            saveFilters();
         });
     }
 }
 
 function init() {
-    savedState = loadState();
+    // Load saved filters first
+    const savedFilters = loadFilters();
+    if (savedFilters) {
+        if (savedFilters.subject && savedFilters.subject !== 'all') {
+            subjectSelect.value = savedFilters.subject;
+        }
+        if (savedFilters.topic && savedFilters.topic !== 'all') {
+            topicSelect.value = savedFilters.topic;
+        }
+        if (savedFilters.subtopic && savedFilters.subtopic !== 'all') {
+            subtopicSelect.value = savedFilters.subtopic;
+        }
+        if (savedFilters.type && savedFilters.type !== 'all') {
+            typeSelect.value = savedFilters.type;
+        }
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput && savedFilters.search) {
+            searchInput.value = savedFilters.search;
+        }
+    }
+
+    // Build dropdowns without loading questions (skipLoad = true)
     populateSubjects();
-    updateTopics();
+    updateTopics(true);
+
+    // Load saved question state
+    savedState = loadState();
+    loadQuestions(); // this will restore answers via applySavedStateToItem
+
     bindFilterEvents();
     resetBtn.addEventListener('click', resetAll);
     
     const toggleCheckbox = document.getElementById('toggleExplanation');
     if (toggleCheckbox) {
-        toggleCheckbox.checked = showExplanations;
+        if (savedState && savedState.showExplanations !== undefined) {
+            toggleCheckbox.checked = savedState.showExplanations;
+            showExplanations = savedState.showExplanations;
+        } else {
+            toggleCheckbox.checked = showExplanations;
+        }
         toggleCheckbox.addEventListener('change', (e) => {
             showExplanations = e.target.checked;
             toggleExplanationsVisibility();
@@ -609,7 +666,6 @@ function init() {
     window.addEventListener('resize', handleScroll);
     window.addEventListener('beforeunload', saveState);
     
-    // LOAD ALL: attach event listener
     if (loadAllBtn) {
         loadAllBtn.addEventListener('click', loadAllQuestions);
     }
