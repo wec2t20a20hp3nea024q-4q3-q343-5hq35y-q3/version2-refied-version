@@ -1,0 +1,319 @@
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Noto Sans TC', Roboto, 'Helvetica Neue', sans-serif;
+            background-color: #e6f0fa;
+            color: #1e2a3e;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 字體縮放變量 */
+        :root {
+            --text-scale: 1.2;
+        }
+
+        .app {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 側邊欄 */
+        .sidebar {
+            width: 280px;
+            background-color: #e6f0fa;
+            border-right: 1px solid #cbdde9;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 2rem 1rem;
+            flex-shrink: 0;
+        }
+
+        .sidebar h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c5a7a;
+            margin-bottom: 1.5rem;
+            padding-left: 0.5rem;
+            border-left: 4px solid #4c9acf;
+        }
+
+        .lesson-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .lesson-btn {
+            background: white;
+            border: none;
+            text-align: left;
+            padding: 0.85rem 1rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1e4663;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            font-family: inherit;
+        }
+
+        .lesson-btn:hover {
+            background-color: #f0f7ff;
+            transform: translateX(4px);
+        }
+
+        .lesson-btn.active {
+            background-color: #ffffff;
+            color: #1e6f9f;
+            font-weight: 600;
+            border-left: 4px solid #3b8fc2;
+            box-shadow: 0 4px 12px rgba(59, 143, 194, 0.15);
+        }
+
+        /* 主內容區 */
+        .main-content {
+            flex: 1;
+            background-color: #ffffff;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 2rem 2rem 2rem;
+        }
+
+        .lesson-title {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: #2c5a7a;
+            border-bottom: 3px solid #cbe4f0;
+            padding-bottom: 0.6rem;
+            margin-bottom: 1rem;
+        }
+
+        /* 字體控制列 */
+        .font-control {
+            background: #f4fafd;
+            border-radius: 40px;
+            padding: 0.5rem 1rem;
+            margin-bottom: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            border: 1px solid #cbe4f0;
+        }
+        .font-control label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #2c5a7a;
+        }
+        .font-control input {
+            flex: 1;
+            min-width: 150px;
+            cursor: pointer;
+        }
+        .font-control span {
+            background: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            color: #1e6f9f;
+            font-weight: 500;
+        }
+
+        .text-content {
+            background: #fefefe;
+            padding: 1.5rem;
+            border-radius: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            line-height: 1.8;
+            font-size: calc(var(--text-scale) * 1rem);
+            color: #1e2f3c;
+            margin-bottom: 2rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border: 1px solid #e2edf5;
+            transition: font-size 0.1s ease;
+        }
+
+        /* 可點擊字詞樣式 - 增加描邊效果 */
+        .clickable-word {
+            display: inline-block;
+            border-bottom: 4px solid #185abc;
+            color: #1c6e9e;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0 2px;
+            margin: 0 1px;
+            /* 描邊效果：使用 box-shadow 模擬外框，不影響佈局 */
+            box-shadow: 0 0 0 2px #83bcd8;
+            border-radius: 4px;
+        }
+
+        .clickable-word:hover {
+            background-color: #fcf4d9;
+            border-bottom-color: #e2b13b;
+            box-shadow: 0 0 0 1px #e2b13b;
+        }
+
+        .clickable-word:active {
+            transform: scale(0.98);
+        }
+
+        /* 對話框樣式 */
+        .word-tooltip {
+            position: absolute;
+            background: #ffffff;
+            color: #002157;
+            padding: 0.6rem 1rem;
+            border-radius: 20px;
+            font-size: calc(var(--text-scale) * 0.9rem);
+            line-height: 1.4;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            border: 1px solid #00293c;
+            z-index: 1000;
+            max-width: 280px;
+            word-wrap: break-word;
+            white-space: normal;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+            backdrop-filter: blur(2px);
+        }
+
+        /* 共用箭頭位置變量 */
+        .word-tooltip::before,
+        .word-tooltip::after {
+            left: var(--arrow-left, 20px);
+        }
+
+        /* 預設：對話框在字詞下方 -> 箭頭朝上指向字詞底部 */
+        .word-tooltip::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            border-width: 0 8px 8px 8px;
+            border-style: solid;
+            border-color: transparent transparent #00364f transparent;
+        }
+        .word-tooltip::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            border-width: 0 7px 7px 7px;
+            border-style: solid;
+            border-color: transparent transparent #ffffff transparent;
+        }
+
+        /* 當對話框在字詞上方時，箭頭朝下指向字詞頂部 */
+        .word-tooltip.above::before {
+            top: auto;
+            bottom: -8px;
+            border-width: 8px 8px 0 8px;
+            border-color: #003c58 transparent transparent transparent;
+        }
+        .word-tooltip.above::after {
+            top: auto;
+            bottom: -6px;
+            border-width: 7px 7px 0 7px;
+            border-color: #ffffff transparent transparent transparent;
+        }
+
+        .error-banner {
+            background: #ffe6e6;
+            border-left: 4px solid #d9534f;
+            padding: 0.8rem 1rem;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            color: #a94442;
+        }
+
+        /* 分析區塊樣式 */
+        .analysis-panel {
+            background: #f9fdfe;
+            border-radius: 24px;
+            border: 1px solid #cbe4f0;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .analysis-header {
+            background: #e6f0fa;
+            padding: 0.8rem 1.5rem;
+            font-weight: 600;
+            color: #2c5a7a;
+            border-bottom: 1px solid #cbe4f0;
+            font-size: 1.1rem;
+        }
+        .analysis-content {
+            padding: 1.2rem 1.5rem;
+            font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: #ffffff;
+            color: #1e4663;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* 響應式 */
+        @media (max-width: 680px) {
+            .app {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: 35vh;
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 1rem;
+                border-right: none;
+                border-bottom: 1px solid #cbdde9;
+            }
+
+            .sidebar h2 {
+                width: 100%;
+                margin-bottom: 0.8rem;
+            }
+
+            .lesson-list {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .lesson-btn {
+                flex: 1 0 auto;
+                text-align: center;
+            }
+
+            .main-content {
+                padding: 1.5rem;
+            }
+
+            .text-content {
+                font-size: calc(var(--text-scale) * 0.95rem);
+            }
+            .word-tooltip {
+                max-width: 220px;
+                font-size: calc(var(--text-scale) * 0.85rem);
+            }
+            .font-control {
+                flex-wrap: wrap;
+            }
+            .analysis-content {
+                font-size: 0.85rem;
+                max-height: 200px;
+            }
+        }
