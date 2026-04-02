@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>淺藍白待辦清單 · 輕量記事本</title>
+    <title>To Do List</title>
     <style>
         * {
             margin: 0;
@@ -313,30 +313,28 @@
 
 <div class="todo-app">
     <div class="app-header">
-        <h1>淺藍白・待辦清單</h1>
-        <div class="sub">輕盈記錄 · 雲感儲存</div>
+        <h1>To Do list</h1>
+        <div class="sub">Local Storage</div>
     </div>
 
     <div class="add-task-section">
         <div class="input-group">
             <input type="text" class="task-input" id="newTaskInput" placeholder="寫下代辦事項... 例如「散步30分鐘」" autocomplete="off">
-            <button class="add-btn" id="addTaskBtn">＋ 新增</button>
+            <button class="add-btn" id="addTaskBtn">Add Task</button>
         </div>
     </div>
 
     <div class="stats-bar">
-        <span>📋 任務進度</span>
-        <span class="counter" id="taskCounter">0 項未完成</span>
-        <button class="clear-completed" id="clearCompletedBtn">✔ 清除已完成</button>
+        <span>Progress</span>
+        <span class="counter" id="taskCounter">0 not completed</span>
+        <button class="clear-completed" id="clearCompletedBtn">Clear Completed</button>
     </div>
 
     <div class="todo-list-container">
         <ul class="todo-list" id="todoList">
-            <!-- 動態渲染任務列表 -->
         </ul>
     </div>
     <div class="footer-note">
-        ✨ 點選 ✏️ 編輯內容 | 勾選後自動歸檔至下方
     </div>
 </div>
 
@@ -356,7 +354,7 @@
         try {
             localStorage.setItem('shallowBlueTodo', JSON.stringify(tasks));
         } catch(e) {
-            console.warn('儲存失敗', e);
+            console.warn('Failed to store', e);
         }
     }
 
@@ -374,9 +372,6 @@
         }
         // 預設優雅範例 (淺藍白主題展示)
         tasks = [
-            { id: Date.now() + 1, text: '✨ 點擊右側 ✏️ 編輯任務內容', completed: false },
-            { id: Date.now() + 2, text: '✅ 完成事項可勾選，自動移至下方', completed: false },
-            { id: Date.now() + 3, text: '🗑️ 刪除或清除已完成，資料自動儲存', completed: true }
         ];
         saveToLocalStorage();
     }
@@ -384,7 +379,7 @@
     // 輔助：更新計數器 (未完成數量)
     function updateCounter() {
         const pendingCount = tasks.filter(task => !task.completed).length;
-        taskCounterSpan.innerText = `${pendingCount} 項未完成`;
+        taskCounterSpan.innerText = `${pendingCount} incomplete`;
     }
 
     // 渲染清單 (排序: 未完成在上，已完成在下)
@@ -398,7 +393,7 @@
         });
 
         if (sortedTasks.length === 0) {
-            todoListEl.innerHTML = `<li class="empty-message">📭 清空狀態 · 新增一項代辦吧</li>`;
+            todoListEl.innerHTML = `<li class="empty-message">(Empty)</li>`;
             updateCounter();
             return;
         }
@@ -415,8 +410,8 @@
                 <input type="checkbox" class="todo-check" ${task.completed ? 'checked' : ''} data-id="${task.id}">
                 <span class="todo-text">${escapeHtml(task.text)}</span>
                 <div class="todo-actions">
-                    <button class="edit-btn" data-id="${task.id}" title="編輯任務">✏️</button>
-                    <button class="delete-btn" data-id="${task.id}" title="刪除任務">🗑️</button>
+                    <button class="edit-btn" data-id="${task.id}" title="Edit">✏️</button>
+                    <button class="delete-btn" data-id="${task.id}" title="Delete">🗑️</button>
                 </div>
             `;
             fragment.appendChild(li);
@@ -446,7 +441,7 @@
         if (text === "") {
             // 簡單提示但不過度打擾，輕柔提醒
             const tempPlaceholder = newTaskInput.placeholder;
-            newTaskInput.placeholder = "請輸入一些內容～";
+            newTaskInput.placeholder = "Input something...";
             newTaskInput.style.backgroundColor = "#fff6e5";
             setTimeout(() => {
                 newTaskInput.placeholder = tempPlaceholder;
@@ -508,7 +503,7 @@
         if (!hasCompleted) {
             // 輕提示無已完成項目
             const tempMsg = taskCounterSpan.innerText;
-            taskCounterSpan.innerText = "✨ 無已完成項目";
+            taskCounterSpan.innerText = "No completed";
             setTimeout(() => {
                 updateCounter();
             }, 800);
