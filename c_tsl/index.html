@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <link rel="stylesheet" href="styles.css">
+    <title>文言文字譯練習</title>
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <h2>📖 課文選擇</h2>
+        <div class="lesson-list" id="lessonList"></div>
+    </aside>
+    <main class="main-content">
+        <div class="lesson-title" id="lessonTitle">請選擇課文</div>
+        <!-- 字體大小控制列 -->
+        <div class="font-control">
+            <label>🔤 字體大小</label>
+            <input type="range" id="fontSlider" min="0.8" max="1.8" step="0.01" value="1.2">
+            <span id="fontValue">1.2</span>
+        </div>
+        <div id="errorMsg" style="display: none;"></div>
+        <div class="text-content" id="textContent"></div>
+        
+        <!-- 分析區塊：從 analysis.js 提取同名課文的分析內容 -->
+        <div class="analysis-panel">
+            <div class="analysis-header">📖 課文分析</div>
+            <div class="analysis-content" id="analysisContent">
+                請在 analysis.js 中定義分析內容，將根據課文標題或 ID 自動顯示。
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="lesson.js"></script>
+<script src="analysis.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
