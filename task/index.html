@@ -319,7 +319,7 @@
 
     <div class="add-task-section">
         <div class="input-group">
-            <input type="text" class="task-input" id="newTaskInput" placeholder="寫下代辦事項... 例如「散步30分鐘」" autocomplete="off">
+            <input type="text" class="task-input" id="newTaskInput" placeholder="Write down something..." autocomplete="off">
             <button class="add-btn" id="addTaskBtn">Add Task</button>
         </div>
     </div>
@@ -483,12 +483,12 @@
     function editTaskById(taskId) {
         const task = tasks.find(t => t.id === taskId);
         if (!task) return;
-        let newText = prompt("✏️ 編輯待辦事項", task.text);
+        let newText = prompt("Edit", task.text);
         if (newText !== null) {
             newText = newText.trim();
             if (newText === "") {
                 // 若清空不修改，簡單提醒保留原樣
-                alert("內容不可為空白，未作修改");
+                alert("Content should not be empty.");
                 return;
             }
             task.text = newText;
