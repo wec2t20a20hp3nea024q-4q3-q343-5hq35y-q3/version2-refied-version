@@ -3,7 +3,8 @@ const users = [
     { username: "root", password: "114514" },
     { username: "Jonah", password: "4y27" },
     { username: "user", password: "abcd" },
-    {username: "account",password:"dddd"}
+    {username: "account",password:"dddd"},
+    {username:"dumbboi",password:"iaminevitable"}
 ];
 
 function authenticate(username, password) {
